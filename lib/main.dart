@@ -46,6 +46,7 @@ class TakePictureScreenState extends State<TakePictureScreen> {
   @override
   void initState() {
     super.initState();
+    flutterTts.speak('Hi , you can use the application now , tap to turn on flash light , long press to take a picture , double tap to retake the picture');
     _controller = CameraController(
       widget.camera,
       ResolutionPreset.medium,
@@ -66,7 +67,7 @@ class TakePictureScreenState extends State<TakePictureScreen> {
         future: _initializeControllerFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
-            flutterTts.speak('Hi , you can use the application now , tap to turn on flash light , long press to take a picture , double tap to retake the picture');
+            /// flutterTts.speak('Hi , you can use the application now , tap to turn on flash light , long press to take a picture , double tap to retake the picture');
             // todo : If the Future is complete, display the preview.
             // todo : return a voice message "hi you can use the app now , you can take a picture by long press"
             return Container(
@@ -98,24 +99,6 @@ class TakePictureScreenState extends State<TakePictureScreen> {
                       }
                     }
                   },
-                 ///   onDoubleTap: () {
-                    ///  flutterTts.speak('You can retake the Image Now !');
-                      // dummy implementation
-                      ///  Navigator.of(context).pop(
-                       ///   MaterialPageRoute(
-                      ///      builder: (context) => DisplayFeatureSubScreen(child: Container()
-                      ///    ),
-                     ///     ),
-                  ///      );
-
-                      /// MaterialPageRoute(
-                      /// builder: (context) => DisplayPictureScreen(
-                      /// imagePath: image.path,
-                      /// ),
-                      /// ),
-                      /// );
-                ///  },
-                  // on long press - take a picture
                   onLongPress: () async {
                     try {
                       await _initializeControllerFuture;
@@ -128,16 +111,15 @@ class TakePictureScreenState extends State<TakePictureScreen> {
                       flutterTts.speak('Your picture sent has $dummy_recieve');
 
 
-                       /// await Navigator.of(context).push(
-                        /// MaterialPageRoute(
-                          /// builder: (context) => DisplayPictureScreen(
+                       await Navigator.of(context).push(
+                       MaterialPageRoute(
+                         builder: (context) => DisplayPictureScreen(
                             // Pass the automatically generated path to
                             // the DisplayPictureScreen widget.
-                            /// imagePath: image.path,
-                          /// ),
-                        /// ),
-                      /// );
-                      ///
+                             imagePath: image.path,
+                          ),
+                        ),
+                      );
                       // todo : the above implementation is just to show you should also have to create an API that pushes image.path
                     } catch (e) {
                       // If an error occurs, log the error to the console.
@@ -162,7 +144,7 @@ class TakePictureScreenState extends State<TakePictureScreen> {
                     child: const Icon(
                       Icons.settings_voice_outlined,
                       color: Colors.black,
-                      size: 500,
+                      size: 50,
                     ),
                   ),
                 ),
@@ -179,13 +161,34 @@ class TakePictureScreenState extends State<TakePictureScreen> {
 
 class DisplayPictureScreen extends StatelessWidget {
   final String imagePath;
+  final FlutterTts flutterTts = FlutterTts();
 
-  const DisplayPictureScreen({super.key, required this.imagePath});
+  DisplayPictureScreen({super.key, required this.imagePath});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Image.file(File(imagePath)),
+      body: Container(
+        height: MediaQuery
+            .of(context)
+            .size
+            .height - 0.1,
+        width: MediaQuery
+            .of(context)
+            .size
+            .width - 0.05,
+        child: Center(
+          child: GestureDetector(
+            onDoubleTap: (){
+              flutterTts.speak('Retaking the picture');
+              Navigator.pop(context);
+              //print("popping out");
+            },
+            child: Image.file(File(imagePath)),
+            /// todo : you can add styling or other ui needed features here
+          ),
+        ),
+      )
     );
   }
 }
