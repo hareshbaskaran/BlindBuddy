@@ -4,8 +4,8 @@ import 'dart:io';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
-const dummy_recieve = "80 percent flower , 20 percent fish";
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -101,14 +101,25 @@ class TakePictureScreenState extends State<TakePictureScreen> {
                   },
                   onLongPress: () async {
                     try {
+                      flutterTts.speak('We have sent the image now , please wait till it is process');
                       await _initializeControllerFuture;
                       final image = await _controller.takePicture();
-                      flutterTts.speak('We have sent the image now , please wait till it is process');
+                      final imagepath = image.path;
+                      var request = http.MultipartRequest('POST', Uri.parse("https://blindbuddy-fastapi.onrender.com/uploadfile"));
+                      request.files.add(
+                          http.MultipartFile(
+                              'picture',
+                              File(imagepath).readAsBytes().asStream(),
+                              File(imagepath).lengthSync(),
+                              filename: imagepath.split("/").last
+                          )
+                      );
+                      var res = await request.send();
                       if (!context.mounted) return;
                       // todo : create api call for this n update in the dummy recieve text
                       //todo : once picture is taken take picture and post it in backend
                       // todo : create a await function that during starting tell "wait till we process " and at end " the taken image is + {json data} using flutterTts.speak($text);.
-                      flutterTts.speak('Your picture sent has $dummy_recieve');
+                      flutterTts.speak('Your picture sent has $res');
 
 
                        await Navigator.of(context).push(

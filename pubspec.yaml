@@ -39,6 +39,7 @@ dependencies:
   path_provider: ^2.1.2
   flutter_tts: ^3.8.5
   path: ^1.9.0
+  http :
 
 dev_dependencies:
   flutter_test:
