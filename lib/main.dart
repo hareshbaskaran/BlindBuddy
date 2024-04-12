@@ -124,10 +124,15 @@ class TakePictureScreenState extends State<TakePictureScreen> {
                       var response = await request.send();
 
 
-                      var res = 0;
-                      final data = response;
-                      print('Response: ${response.statusCode}, Body: $data');
-                      flutterTts.speak('Your picture sent has $res');
+                      if (response.statusCode == 200) {
+                        print('Image uploaded successfully');
+                      } else {
+                        print('Image upload failed with status ${response.statusCode}');
+                      }
+
+                      final recieve = await response.stream.bytesToString() ;
+                      print(recieve);
+                      flutterTts.speak('the taken image , $recieve');
 
                        await Navigator.of(context).push(
                        MaterialPageRoute(
