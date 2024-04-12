@@ -98,20 +98,15 @@ class TakePictureScreenState extends State<TakePictureScreen> {
                     }
                   },
                   onLongPress: () async {
-                    try {
                       print('long press');
                       flutterTts.speak('We have sent the image now , please wait till it is process');
                       await _initializeControllerFuture;
                       final image = await _controller.takePicture();
                       File imageFile = File(image.path);
-
-                      // Create a multipart request
                       var request = http.MultipartRequest(
                         'POST',
                         Uri.parse(url),
                       );
-
-                      // Add file to the request
                       request.files.add(
                         await http.MultipartFile.fromPath(
                           'file',
@@ -119,20 +114,17 @@ class TakePictureScreenState extends State<TakePictureScreen> {
                           contentType: MediaType('image', 'jpeg'),
                         ),
                       );
-
-                      // Send the request
                       var response = await request.send();
-
-
                       if (response.statusCode == 200) {
                         print('Image uploaded successfully');
+                        final recieve = await response.stream.bytesToString() ;
+                        print(recieve);
+                        flutterTts.speak('the taken image , $recieve');
                       } else {
                         print('Image upload failed with status ${response.statusCode}');
-                      }
+                        flutterTts.speak('Sorry Internal error please retake the picture');
 
-                      final recieve = await response.stream.bytesToString() ;
-                      print(recieve);
-                      flutterTts.speak('the taken image , $recieve');
+                      }
 
                        await Navigator.of(context).push(
                        MaterialPageRoute(
@@ -141,10 +133,6 @@ class TakePictureScreenState extends State<TakePictureScreen> {
                           ),
                         ),
                       );
-                    } catch (e) {
-                      flutterTts.speak('Sorry internal error , kindly retake the picture');
-                      print(e);
-                    }
                   },
                   child: Container(
                     height: MediaQuery
@@ -201,7 +189,6 @@ class DisplayPictureScreen extends StatelessWidget {
             onDoubleTap: (){
               flutterTts.speak('Retaking the picture');
               Navigator.pop(context);
-              //print("popping out");
             },
             child: Image.file(File(imagePath)),
           ),
