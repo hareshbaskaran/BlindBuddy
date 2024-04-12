@@ -1,11 +1,10 @@
 import 'dart:convert';
-
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:camera/camera.dart';
-import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 String url = 'https://blindbuddy-fastapi.onrender.com/uploadfile';
@@ -24,7 +23,6 @@ Future<void> main() async {
   );
 }
 
-// A screen that allows users to take a picture using a given camera.
 class TakePictureScreen extends StatefulWidget {
   const TakePictureScreen({
     super.key,
@@ -69,9 +67,6 @@ class TakePictureScreenState extends State<TakePictureScreen> {
         future: _initializeControllerFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
-            /// flutterTts.speak('Hi , you can use the application now , tap to turn on flash light , long press to take a picture , double tap to retake the picture');
-            // todo : If the Future is complete, display the preview.
-            // todo : return a voice message "hi you can use the app now , you can take a picture by long press"
             return Container(
               height: MediaQuery
                   .of(context)
@@ -108,36 +103,38 @@ class TakePictureScreenState extends State<TakePictureScreen> {
                       await _initializeControllerFuture;
                       final image = await _controller.takePicture();
                       final imagepath = image.path;
-                      var request = http.MultipartRequest('POST', Uri.parse(url));
-                      request.files.add(
-                          http.MultipartFile(
-                              'picture',
-                              File(imagepath).readAsBytes().asStream(),
-                              File(imagepath).lengthSync(),
-                              filename: imagepath.split("/").last
-                          )
+                      print(imagepath);
+
+                      final dio = Dio();
+
+                      final formData = FormData.fromMap({
+                        'picture': await MultipartFile.fromFile(imagepath, filename: 'image.jpg'),
+                      });
+
+                      final response = await dio.post(
+                        url,
+                        data: formData,
+                        onSendProgress: (progress, total) {
+                          print('Upload progress: $progress/$total');
+                        },
+                        options: Options(followRedirects: false),
                       );
-                     ///var response = await request.send();
-                      ///
-                      ///String res = await response.stream.transform(utf8.decoder).join();
-                      ///print('error$res');
-                      ///
-                      var response = await request.send();
+                      print('Response status code: ${response.statusCode}');
+                      print('Response headers: ${response.headers}');
+                      print('Response data: ${response.data}');
+
+
                       var res = 0;
                       if (response.statusCode == 200) {
-                        // Successful upload
-                        var res = await response.stream.transform(utf8.decoder).join();
-                        print('Response: ${response.statusCode}, Body: $res');
-                        flutterTts.speak('Your picture sent has $res'); // Assuming res contains success message
+                        final data = response.data;
+                        print('Response: ${response.statusCode}, Body: $data');
+                        flutterTts.speak('Your picture sent has $res');
                       } else {
                         print('Error uploading image: ${response.statusCode}');
                         flutterTts.speak('Sorry internal error , kindly retake the picture');
                         throw Exception('Failed to upload image');
                       }
                       if (!context.mounted) return;
-                      // todo : create api call for this n update in the dummy recieve text
-                      //todo : once picture is taken take picture and post it in backend
-                      // todo : create a await function that during starting tell "wait till we process " and at end " the taken image is + {json data} using flutterTts.speak($text);.
                       flutterTts.speak('Your picture sent has $res');
                       print('Your picture sent has $res');
 
@@ -145,15 +142,11 @@ class TakePictureScreenState extends State<TakePictureScreen> {
                        await Navigator.of(context).push(
                        MaterialPageRoute(
                          builder: (context) => DisplayPictureScreen(
-                            // Pass the automatically generated path to
-                            // the DisplayPictureScreen widget.
                              imagePath: image.path,
                           ),
                         ),
                       );
-                      // todo : the above implementation is just to show you should also have to create an API that pushes image.path
                     } catch (e) {
-                      // If an error occurs, log the error to the console.
                       flutterTts.speak('Sorry internal error , kindly retake the picture');
                       print(e);
                     }
@@ -216,7 +209,6 @@ class DisplayPictureScreen extends StatelessWidget {
               //print("popping out");
             },
             child: Image.file(File(imagePath)),
-            /// todo : you can add styling or other ui needed features here
           ),
         ),
       )
