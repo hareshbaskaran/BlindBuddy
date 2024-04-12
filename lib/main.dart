@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:io';
@@ -6,7 +8,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-
+String url = 'https://blindbuddy-fastapi.onrender.com/uploadfile';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final cameras = await availableCameras();
@@ -101,11 +103,12 @@ class TakePictureScreenState extends State<TakePictureScreen> {
                   },
                   onLongPress: () async {
                     try {
+                      print('long press');
                       flutterTts.speak('We have sent the image now , please wait till it is process');
                       await _initializeControllerFuture;
                       final image = await _controller.takePicture();
                       final imagepath = image.path;
-                      var request = http.MultipartRequest('POST', Uri.parse("https://blindbuddy-fastapi.onrender.com/uploadfile"));
+                      var request = http.MultipartRequest('POST', Uri.parse(url));
                       request.files.add(
                           http.MultipartFile(
                               'picture',
@@ -114,12 +117,15 @@ class TakePictureScreenState extends State<TakePictureScreen> {
                               filename: imagepath.split("/").last
                           )
                       );
-                      var res = await request.send();
+                      var response = await request.send();
+                      var res = await response.stream.transform(utf8.decoder).join();
+                      print('error$res');
                       if (!context.mounted) return;
                       // todo : create api call for this n update in the dummy recieve text
                       //todo : once picture is taken take picture and post it in backend
                       // todo : create a await function that during starting tell "wait till we process " and at end " the taken image is + {json data} using flutterTts.speak($text);.
                       flutterTts.speak('Your picture sent has $res');
+                      print('Your picture sent has $res');
 
 
                        await Navigator.of(context).push(
@@ -134,7 +140,7 @@ class TakePictureScreenState extends State<TakePictureScreen> {
                       // todo : the above implementation is just to show you should also have to create an API that pushes image.path
                     } catch (e) {
                       // If an error occurs, log the error to the console.
-                      flutterTts.speak('Sorry , Retake the picture');
+                      flutterTts.speak('Sorry internal error , kindly retake the picture');
                       print(e);
                     }
                   },
