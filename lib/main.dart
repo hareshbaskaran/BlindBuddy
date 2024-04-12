@@ -99,7 +99,6 @@ class TakePictureScreenState extends State<TakePictureScreen> {
                   },
                   onLongPress: () async {
                       print('long press');
-                      flutterTts.speak('We have sent the image now , please wait till it is process');
                       await _initializeControllerFuture;
                       final image = await _controller.takePicture();
                       File imageFile = File(image.path);
@@ -114,12 +113,15 @@ class TakePictureScreenState extends State<TakePictureScreen> {
                           contentType: MediaType('image', 'jpeg'),
                         ),
                       );
+                      flutterTts.speak('We have sent the image now , please wait till it is process');
                       var response = await request.send();
+                      flutterTts.speak('processing your image');
+                      print('polayadi money');
+                      final recieve = await response.stream.bytesToString() ;
+                      print(recieve);
+                      flutterTts.speak('the taken image , $recieve');
                       if (response.statusCode == 200) {
                         print('Image uploaded successfully');
-                        final recieve = await response.stream.bytesToString() ;
-                        print(recieve);
-                        flutterTts.speak('the taken image , $recieve');
                       } else {
                         print('Image upload failed with status ${response.statusCode}');
                         flutterTts.speak('Sorry Internal error please retake the picture');
