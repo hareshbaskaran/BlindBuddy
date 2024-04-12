@@ -117,9 +117,23 @@ class TakePictureScreenState extends State<TakePictureScreen> {
                               filename: imagepath.split("/").last
                           )
                       );
+                     ///var response = await request.send();
+                      ///
+                      ///String res = await response.stream.transform(utf8.decoder).join();
+                      ///print('error$res');
+                      ///
                       var response = await request.send();
-                      var res = await response.stream.transform(utf8.decoder).join();
-                      print('error$res');
+                      var res = 0;
+                      if (response.statusCode == 200) {
+                        // Successful upload
+                        var res = await response.stream.transform(utf8.decoder).join();
+                        print('Response: ${response.statusCode}, Body: $res');
+                        flutterTts.speak('Your picture sent has $res'); // Assuming res contains success message
+                      } else {
+                        print('Error uploading image: ${response.statusCode}');
+                        flutterTts.speak('Sorry internal error , kindly retake the picture');
+                        throw Exception('Failed to upload image');
+                      }
                       if (!context.mounted) return;
                       // todo : create api call for this n update in the dummy recieve text
                       //todo : once picture is taken take picture and post it in backend
