@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:camera/camera.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 String url = 'https://blindbuddy-fastapi.onrender.com/uploadfile';
 Future<void> main() async {
@@ -102,42 +103,31 @@ class TakePictureScreenState extends State<TakePictureScreen> {
                       flutterTts.speak('We have sent the image now , please wait till it is process');
                       await _initializeControllerFuture;
                       final image = await _controller.takePicture();
-                      final imagepath = image.path;
-                      print(imagepath);
+                      File imageFile = File(image.path);
 
-                      final dio = Dio();
-
-                      final formData = FormData.fromMap({
-                        'picture': await MultipartFile.fromFile(imagepath, filename: 'image.jpg'),
-                      });
-
-                      final response = await dio.post(
-                        url,
-                        data: formData,
-                        onSendProgress: (progress, total) {
-                          print('Upload progress: $progress/$total');
-                        },
-                        options: Options(followRedirects: false),
+                      // Create a multipart request
+                      var request = http.MultipartRequest(
+                        'POST',
+                        Uri.parse(url),
                       );
-                      print('Response status code: ${response.statusCode}');
-                      print('Response headers: ${response.headers}');
-                      print('Response data: ${response.data}');
+
+                      // Add file to the request
+                      request.files.add(
+                        await http.MultipartFile.fromPath(
+                          'file',
+                          imageFile.path,
+                          contentType: MediaType('image', 'jpeg'),
+                        ),
+                      );
+
+                      // Send the request
+                      var response = await request.send();
 
 
                       var res = 0;
-                      if (response.statusCode == 200) {
-                        final data = response.data;
-                        print('Response: ${response.statusCode}, Body: $data');
-                        flutterTts.speak('Your picture sent has $res');
-                      } else {
-                        print('Error uploading image: ${response.statusCode}');
-                        flutterTts.speak('Sorry internal error , kindly retake the picture');
-                        throw Exception('Failed to upload image');
-                      }
-                      if (!context.mounted) return;
+                      final data = response;
+                      print('Response: ${response.statusCode}, Body: $data');
                       flutterTts.speak('Your picture sent has $res');
-                      print('Your picture sent has $res');
-
 
                        await Navigator.of(context).push(
                        MaterialPageRoute(

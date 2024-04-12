@@ -41,6 +41,7 @@ dependencies:
   path: ^1.9.0
   http :
   dio :
+  http_parser:
 
 dev_dependencies:
   flutter_test:
